@@ -175,6 +175,25 @@ def test_reuse_address_is_off_on_windows(platform: str, expected: bool) -> None:
     assert _load_serve()._reuse_address(platform) is expected
 
 
+def test_bind_does_not_look_up_the_host_name(
+    tmp_path: Path, monkeypatch: pytest.MonkeyPatch
+) -> None:
+    """Binding does not call ``socket.getfqdn`` (it took 35 s on a macOS CI runner)."""
+    import socket
+
+    def no_lookup(name: str = "") -> str:
+        raise AssertionError(f"getfqdn({name!r}) was called")
+
+    monkeypatch.setattr(socket, "getfqdn", no_lookup)
+    httpd = _load_serve().make_server(tmp_path)
+    try:
+        assert httpd.server_address[0] == "127.0.0.1"
+        assert httpd.server_name == "127.0.0.1"
+        assert httpd.server_port == httpd.server_address[1]
+    finally:
+        httpd.server_close()
+
+
 def test_folder_id_differs_by_folder(tmp_path: Path) -> None:
     """Each served folder gets its own id (the same folder gets the same id)."""
     serve = _load_serve()

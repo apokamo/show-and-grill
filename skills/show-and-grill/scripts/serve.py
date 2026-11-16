@@ -39,6 +39,7 @@ import os
 from pathlib import Path
 import re
 import secrets
+import socketserver
 import sys
 import tempfile
 import threading
@@ -147,9 +148,21 @@ def _reuse_address(platform: str) -> bool:
 
 
 class _GrillServer(http.server.ThreadingHTTPServer):
-    """The HTTP server, without address reuse on Windows."""
+    """The HTTP server, without address reuse on Windows and without a name lookup."""
 
     allow_reuse_address = _reuse_address(sys.platform)
+
+    def server_bind(self) -> None:
+        """Bind the socket without ``socket.getfqdn``.
+
+        ``HTTPServer.server_bind`` looks up the host name, which can take tens of
+        seconds on a Mac (35 s on a CI runner). The server only listens on 127.0.0.1,
+        so the name is not needed.
+        """
+        socketserver.TCPServer.server_bind(self)
+        host, port = self.server_address[:2]
+        self.server_name = str(host)
+        self.server_port = int(port)
 
 
 def _alive(port: int, root: Path) -> bool:
