@@ -422,22 +422,60 @@ def test_readme_covers_install_and_credits() -> None:
         assert needle in text, needle
 
 
+_FENCE = re.compile(r"^```(\w*)\n(.*?)^```", re.MULTILINE | re.DOTALL)
+
+
+def _commands(text: str) -> list[str]:
+    """Return the ``bash`` and ``powershell`` blocks of a README, without comments.
+
+    Comments are translated, so they are dropped; the commands must stay the same.
+
+    Args:
+        text: The README text.
+
+    Returns:
+        One string per block, in order.
+    """
+    blocks = []
+    for lang, body in _FENCE.findall(text):
+        if lang not in {"bash", "powershell"}:
+            continue
+        lines = [re.sub(r"\s+#.*$", "", line).rstrip() for line in body.splitlines()]
+        blocks.append("\n".join(line for line in lines if line and not line.startswith("#")))
+    return blocks
+
+
+def _heading_levels(text: str) -> list[int]:
+    """Return the level of each Markdown heading outside code blocks.
+
+    Args:
+        text: The README text.
+
+    Returns:
+        The number of ``#`` of each heading, in order.
+    """
+    outside = _FENCE.sub("", text)
+    return [len(m.group(1)) for m in re.finditer(r"^(#{1,6}) ", outside, re.MULTILINE)]
+
+
 def test_readme_has_both_languages() -> None:
-    """``README.md`` (the source) and ``README.ja.md`` link to each other and cover the same parts."""
+    """``README.md`` (the source) and ``README.ja.md`` link to each other and match in structure.
+
+    Both have the same commands (``bash`` and ``powershell`` blocks, comments aside) and
+    the same heading outline. This does not check the translation itself.
+    """
     en = (_REPO_DIR / "README.md").read_text(encoding="utf-8")
     ja = (_REPO_DIR / "README.ja.md").read_text(encoding="utf-8")
     assert "[日本語](README.ja.md)" in en
     assert "[English](README.md)" in ja
-    for needle in (
-        "claude plugin marketplace add apokamo/show-and-grill",
-        "codex plugin marketplace add apokamo/show-and-grill",
-        "npx skills add apokamo/show-and-grill",
-        "--user --version v",
-        "Copy-Item",
-        "https://github.com/mattpocock/skills",
-        "[MIT](LICENSE)",
-    ):
+    assert len(_commands(en)) >= 6
+    assert _commands(ja) == _commands(en)
+    assert _heading_levels(ja) == _heading_levels(en)
+    for needle in ("https://github.com/mattpocock/skills", "[MIT](LICENSE)"):
         assert needle in ja, needle
+
+
+_PICTURE = re.compile(r"<picture>(.*?)</picture>", re.DOTALL)
 
 
 @pytest.mark.parametrize(
@@ -445,12 +483,19 @@ def test_readme_has_both_languages() -> None:
     [("README.md", "docs/images/example-"), ("README.ja.md", "docs/images/example-ja-")],
 )
 def test_readme_shows_the_example_page(readme: str, prefix: str) -> None:
-    """Each README shows the example page in its language, light and dark, and the images exist."""
+    """Each README shows the example page in its language: dark in ``<source>``, light in ``<img>``."""
     text = (_REPO_DIR / readme).read_text(encoding="utf-8")
+    text = re.sub(r"<!--.*?-->", "", text, flags=re.DOTALL)
+    pictures = _PICTURE.findall(text)
+    assert len(pictures) == 1
+    picture = pictures[0]
+    assert re.search(
+        rf'<source media="\(prefers-color-scheme: dark\)" srcset="{prefix}dark\.png">',
+        picture,
+    )
+    assert re.search(rf'<img alt="[^"]+" src="{prefix}light\.png"', picture)
     for image in (f"{prefix}light.png", f"{prefix}dark.png"):
-        assert image in text, image
         assert (_REPO_DIR / image).is_file(), image
-    assert "prefers-color-scheme: dark" in text
 
 
 def test_changelog_has_the_plugin_version() -> None:

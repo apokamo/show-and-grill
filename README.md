@@ -13,7 +13,9 @@ Use it on purpose, right after an issue or plan is written and before automated 
   <img alt="A question page: a summary, how things work now, two options compared with sequence figures and a table, and a recommendation" src="docs/images/example-light.png" width="720">
 </picture>
 
-One question page ([`example-en.html`](skills/show-and-grill/example-en.html); also in [Japanese](skills/show-and-grill/example-ja.html)). The terminal shows only the question, the options, the recommendation, and the link:
+One question page ([`example-en.html`](skills/show-and-grill/example-en.html); also in [Japanese](skills/show-and-grill/example-ja.html)). It is a real question decided for the first version of this skill, kept as an example of the format. It is not a guide to how the skill works now: for example, Windows without Python now uses a PowerShell server (see [Requirements](#requirements)).
+
+The terminal shows only the question, the options, the recommendation, and the link:
 
 ```text
 **Q3. Where should the past results of each category appear?**
@@ -39,9 +41,9 @@ It is not a GUI. Each page is a static HTML file, and a tiny local server only s
 
 ## How it works
 
-1. You start it on an issue or a plan: `/show-and-grill 123` in Claude Code, `$show-and-grill 123` in Codex. It never starts on its own.
+1. You start it on an issue or a plan: `/show-and-grill 123` in Claude Code (`/show-and-grill:show-and-grill 123` if you installed the Claude Code plugin), `$show-and-grill 123` in Codex. It never starts on its own.
 2. The agent reads the target and the code, and lists the decisions that are hard to undo. It looks up facts in the code instead of asking you. A small issue is skipped.
-3. For each question, it writes one page and serves the folder on `127.0.0.1`. The server stops by itself when unused.
+3. For each question, it writes one page and serves the folder on `127.0.0.1`. The Python server stops after 120 idle minutes. The PowerShell server (Windows without Python) runs until its terminal or session ends, or you press Ctrl+C.
 4. You answer in the terminal: `A`, `yes`, `back to Q2`, or `more detail` to rewrite the page at more depth.
 5. The decisions go into the issue body, and a `## show-and-grill provenance` comment records each question and answer. Without `gh`, it writes a Markdown file for you to paste. For a local plan, it appends to the plan or writes a new file, as you choose. If you stop early, it saves the progress so you can resume.
 
