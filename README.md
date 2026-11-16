@@ -1,10 +1,49 @@
 # show-and-grill
 
+Language: English | [日本語](README.ja.md)
+
 A relentless design interview for coding agents (Claude Code and Codex).
 
 Before each question, the agent writes a page with the facts you need to decide: how things work now, how the options differ, and a recommendation, with figures and tables. You open the page from a link in the terminal and answer in the terminal, one question at a time. At the end, the decisions go into the issue body (or your plan file) and a provenance comment.
 
 Use it on purpose, right after an issue or plan is written and before automated work starts. Skip it for small issues.
+
+<picture>
+  <source media="(prefers-color-scheme: dark)" srcset="docs/images/example-dark.png">
+  <img alt="A question page: a summary, how things work now, two options compared with sequence figures and a table, and a recommendation" src="docs/images/example-light.png" width="720">
+</picture>
+
+One question page ([`example-en.html`](skills/show-and-grill/example-en.html); also in [Japanese](skills/show-and-grill/example-ja.html)). The terminal shows only the question, the options, the recommendation, and the link:
+
+```text
+**Q3. Where should the past results of each category appear?**
+- A: A summary above the list
+- B: In the category heading
+- C: Do not show them
+Recommendation: A — readers see what the category means before reading the list
+Explanation: http://127.0.0.1:8765/q03.html
+```
+
+## Why show-and-grill
+
+Interviewing yourself before work starts catches the decisions that are costly to undo. In a terminal-only interview, though, the facts behind each question have to fit in a chat message. show-and-grill moves those facts to a page and keeps the terminal for answering.
+
+| | Interview in the terminal only | show-and-grill |
+|---|---|---|
+| Facts for a decision | Mixed into the question text | One page per question: how it works now, the options, a recommendation |
+| Comparing options | Prose | Figures (sequences, layouts, before and after) and a table |
+| The terminal | Long messages to scroll | The question, the options, the recommendation, and a link |
+| Where the decisions go | Wherever you copy them | The issue body, plus a provenance comment with each question and answer |
+
+It is not a GUI. Each page is a static HTML file, and a tiny local server only serves the files. With no browser (SSH, a devcontainer), `cui` keeps everything in the terminal.
+
+## How it works
+
+1. You start it on an issue or a plan: `/show-and-grill 123` in Claude Code, `$show-and-grill 123` in Codex. It never starts on its own.
+2. The agent reads the target and the code, and lists the decisions that are hard to undo. It looks up facts in the code instead of asking you. A small issue is skipped.
+3. For each question, it writes one page and serves the folder on `127.0.0.1`. The server stops by itself when unused.
+4. You answer in the terminal: `A`, `yes`, `back to Q2`, or `more detail` to rewrite the page at more depth.
+5. The decisions go into the issue body, and a `## show-and-grill provenance` comment records each question and answer. Without `gh`, it writes a Markdown file for you to paste. For a local plan, it appends to the plan or writes a new file, as you choose. If you stop early, it saves the progress so you can resume.
 
 ```text
 /show-and-grill 123                 # Claude Code: grill issue 123
@@ -12,7 +51,7 @@ Use it on purpose, right after an issue or plan is written and before automated 
 $show-and-grill 123 detail ja       # Codex: longer pages, in Japanese
 ```
 
-See [skills/show-and-grill/SKILL.md](skills/show-and-grill/SKILL.md) for the full behavior.
+See [skills/show-and-grill/SKILL.md](skills/show-and-grill/SKILL.md) for the full behavior. Changes between versions are in [CHANGELOG.md](CHANGELOG.md).
 
 ## Install
 

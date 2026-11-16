@@ -55,6 +55,9 @@ _NEW_PARTS = (
 
 _SKIP_PARTS = {"__pycache__", ".pytest_cache", ".git"}
 
+# Suffixes that ``_hits`` does not read: CSS (colors look like issue numbers) and images.
+_NOT_SEARCHED = {".css", ".png"}
+
 
 def _files(base: Path) -> list[Path]:
     """List the files under ``base``, without caches and git data.
@@ -80,7 +83,7 @@ def _text_files() -> list[Path]:
 
 
 def _hits(base: Path, pattern: re.Pattern[str]) -> list[str]:
-    """Find lines that match ``pattern`` in text files under ``base`` (``*.css`` excluded).
+    """Find lines that match ``pattern`` in text files under ``base`` (``_NOT_SEARCHED`` excluded).
 
     Args:
         base: The folder to search.
@@ -92,7 +95,7 @@ def _hits(base: Path, pattern: re.Pattern[str]) -> list[str]:
     return [
         f"{path.relative_to(base)}:{lineno}: {line.strip()}"
         for path in _files(base)
-        if path.suffix != ".css"
+        if path.suffix not in _NOT_SEARCHED
         for lineno, line in enumerate(
             path.read_text(encoding="utf-8-sig").splitlines(), start=1
         )
@@ -335,7 +338,7 @@ def test_powershell_server_is_described() -> None:
 
 
 def test_repository_has_no_origin_specific_strings() -> None:
-    """No origin repository strings anywhere in the repository (``*.css`` and caches excluded)."""
+    """No origin repository strings anywhere in the repository (``*.css``, images, and caches excluded)."""
     assert _hits(_REPO_DIR, _ORIGIN_PATTERN) == []
 
 
@@ -417,6 +420,47 @@ def test_readme_covers_install_and_credits() -> None:
         "[MIT](LICENSE)",
     ):
         assert needle in text, needle
+
+
+def test_readme_has_both_languages() -> None:
+    """``README.md`` (the source) and ``README.ja.md`` link to each other and cover the same parts."""
+    en = (_REPO_DIR / "README.md").read_text(encoding="utf-8")
+    ja = (_REPO_DIR / "README.ja.md").read_text(encoding="utf-8")
+    assert "[日本語](README.ja.md)" in en
+    assert "[English](README.md)" in ja
+    for needle in (
+        "claude plugin marketplace add apokamo/show-and-grill",
+        "codex plugin marketplace add apokamo/show-and-grill",
+        "npx skills add apokamo/show-and-grill",
+        "--user --version v",
+        "Copy-Item",
+        "https://github.com/mattpocock/skills",
+        "[MIT](LICENSE)",
+    ):
+        assert needle in ja, needle
+
+
+@pytest.mark.parametrize(
+    ("readme", "prefix"),
+    [("README.md", "docs/images/example-"), ("README.ja.md", "docs/images/example-ja-")],
+)
+def test_readme_shows_the_example_page(readme: str, prefix: str) -> None:
+    """Each README shows the example page in its language, light and dark, and the images exist."""
+    text = (_REPO_DIR / readme).read_text(encoding="utf-8")
+    for image in (f"{prefix}light.png", f"{prefix}dark.png"):
+        assert image in text, image
+        assert (_REPO_DIR / image).is_file(), image
+    assert "prefers-color-scheme: dark" in text
+
+
+def test_changelog_has_the_plugin_version() -> None:
+    """``CHANGELOG.md`` has an Unreleased section and a section for the plugin version."""
+    text = (_REPO_DIR / "CHANGELOG.md").read_text(encoding="utf-8")
+    assert "## [Unreleased]" in text
+    version = _json(".claude-plugin/plugin.json")["version"]
+    assert _json(".codex-plugin/plugin.json")["version"] == version
+    assert f"## [{version}] - " in text
+    assert f"/releases/tag/v{version}" in text
 
 
 def test_serve_ps1_has_bom_and_ascii_only() -> None:
