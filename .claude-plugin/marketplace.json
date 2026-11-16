@@ -1,0 +1,14 @@
+{
+  "name": "show-and-grill",
+  "owner": {
+    "name": "apokamo",
+    "url": "https://github.com/apokamo"
+  },
+  "plugins": [
+    {
+      "name": "show-and-grill",
+      "source": "./",
+      "description": "A relentless design interview that shows the facts for each decision as a page with figures and tables, then asks one hard question at a time in the terminal."
+    }
+  ]
+}

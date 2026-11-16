@@ -1,0 +1,3 @@
+# Codex metadata. The person starts this skill on purpose ($show-and-grill); Codex must not pick it on its own.
+policy:
+  allow_implicit_invocation: false

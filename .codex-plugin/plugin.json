@@ -1,0 +1,20 @@
+{
+  "name": "show-and-grill",
+  "version": "0.1.0",
+  "description": "A relentless design interview that shows the facts for each decision as a page with figures and tables, then asks one hard question at a time in the terminal.",
+  "author": {
+    "name": "apokamo",
+    "url": "https://github.com/apokamo"
+  },
+  "homepage": "https://github.com/apokamo/show-and-grill",
+  "repository": "https://github.com/apokamo/show-and-grill",
+  "license": "MIT",
+  "keywords": ["grill", "design-interview", "decisions", "skill"],
+  "skills": "./skills/",
+  "interface": {
+    "displayName": "Show and Grill",
+    "shortDescription": "Decide hard questions with figures and tables",
+    "developerName": "apokamo",
+    "category": "Productivity"
+  }
+}

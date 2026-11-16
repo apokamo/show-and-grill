@@ -1,0 +1,124 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>show-and-grill</title>
+<link rel="stylesheet" href="assets/grill.css">
+</head>
+<body>
+<nav id="nav"></nav>
+<main id="content"></main>
+<script type="text/markdown" id="src">
+# Q1. Should the link to each page use http or file?
+
+> Example (summary depth). A real question from the first version of this skill, written in this skill's format.
+
+<div class="summary">
+
+- Each question gets one HTML page on disk.
+- An http link goes through a small server on your own computer. A file link opens the file directly.
+- Some browser and WSL settings block file links.
+
+</div>
+
+**What to decide**: the form of the link under each question.
+Why now: every question message carries this link, so a later change touches every step of the skill.
+
+## Now: pages are files, and both links opened in one test
+
+- The skill writes one HTML file for each question.
+- In Windows Terminal with WSL (the Windows Subsystem for Linux), both an http link and a file link opened on click.
+- A file link can still fail under some WSL or browser security settings.
+
+## Options: http adds a server step, file skips it
+
+What to see in this figure: **with http, the browser does not read the file itself. A small server reads it.**
+
+<div class="cases">
+<div class="case">
+<p class="case-title">A: http (through a small server)</p>
+<svg class="dg" width="400" height="236" viewBox="0 0 400 236" role="img" aria-label="With http, the browser asks the server, and the server reads the file">
+<rect class="box" x="8" y="8" width="84" height="36" rx="6"/>
+<text x="50" y="26">Link</text>
+<rect class="box" x="108" y="8" width="84" height="36" rx="6"/>
+<text x="150" y="26">Browser</text>
+<rect class="box" x="208" y="8" width="84" height="36" rx="6"/>
+<text x="250" y="26">Server</text>
+<rect class="box" x="308" y="8" width="84" height="36" rx="6"/>
+<text x="350" y="26">Files</text>
+<line class="lifeline" x1="50" y1="44" x2="50" y2="228"/>
+<line class="lifeline" x1="150" y1="44" x2="150" y2="228"/>
+<line class="lifeline" x1="250" y1="44" x2="250" y2="228"/>
+<line class="lifeline" x1="350" y1="44" x2="350" y2="228"/>
+<line class="edge" x1="50" y1="70" x2="146" y2="70"/>
+<text class="label" x="100" y="58">click</text>
+<line class="edge" x1="150" y1="110" x2="246" y2="110"/>
+<text class="label" x="200" y="98">request</text>
+<path class="leader" d="M 200 117 L 200 113"/>
+<g class="callout" transform="translate(200 128)"><circle r="11"/><text>1</text></g>
+<line class="edge key" x1="250" y1="150" x2="346" y2="150"/>
+<text class="label" x="300" y="138">read</text>
+<path class="leader" d="M 300 157 L 300 153"/>
+<g class="callout" transform="translate(300 168)"><circle r="11"/><text>2</text></g>
+<line class="edge" x1="250" y1="208" x2="154" y2="208"/>
+<text class="label" x="200" y="196">page</text>
+</svg>
+</div>
+<div class="case">
+<p class="case-title">B: file (open the file directly)</p>
+<svg class="dg" width="400" height="236" viewBox="0 0 400 236" role="img" aria-label="With file, the browser reads the file itself, and no server takes part">
+<rect class="box" x="8" y="8" width="84" height="36" rx="6"/>
+<text x="50" y="26">Link</text>
+<rect class="box" x="108" y="8" width="84" height="36" rx="6"/>
+<text x="150" y="26">Browser</text>
+<rect class="box muted" x="208" y="8" width="84" height="36" rx="6"/>
+<text x="250" y="26">Server</text>
+<rect class="box" x="308" y="8" width="84" height="36" rx="6"/>
+<text x="350" y="26">Files</text>
+<line class="lifeline" x1="50" y1="44" x2="50" y2="228"/>
+<line class="lifeline" x1="150" y1="44" x2="150" y2="228"/>
+<line class="lifeline" x1="350" y1="44" x2="350" y2="228"/>
+<line class="edge" x1="50" y1="70" x2="146" y2="70"/>
+<text class="label" x="100" y="58">click</text>
+<line class="edge key" x1="150" y1="150" x2="346" y2="150"/>
+<text class="label" x="250" y="138">open file</text>
+<path class="leader" d="M 250 157 L 250 153"/>
+<g class="callout" transform="translate(250 168)"><circle r="11"/><text>3</text></g>
+<line class="edge" x1="350" y1="208" x2="154" y2="208"/>
+<text class="label" x="250" y="196">page</text>
+</svg>
+</div>
+</div>
+
+- ① The browser asks a small server on your own computer. The server must be running.
+- ② The server reads only the pages in the question folder.
+- ③ The browser opens the file itself. Some settings block this step.
+
+| | A: http | B: file |
+|---|---|---|
+| Opens on click | Yes, with any setting | Not with some settings |
+| Setup | Start one server (it stops after 120 idle minutes) | None |
+| Without Python | Does not work | Works |
+
+## Recommendation: A (http), with B only when the server cannot start
+
+**Recommendation: A by default. Use B only when the server cannot start.**
+
+- A page must open on click. B fails in some known settings, so it cannot be the default.
+
+This is wrong if: most people use a computer without Python (for example, Windows without WSL). Then B is the better default.
+
+<details>
+<summary>Evidence (what we checked)</summary>
+
+- **Both links opened**: tested on 2026-11-07 with Claude Code in Windows Terminal and WSL.
+- **A file link can fail**: reported by the maintainer during the first version.
+- **Only your own computer can reach the server**: it listens on 127.0.0.1. (`scripts/serve.py:43`, `scripts/serve.py:265`)
+- **The server stops after 120 idle minutes**: (`scripts/serve.py:360`)
+
+</details>
+</script>
+<script src="assets/grill.js"></script>
+</body>
+</html>
