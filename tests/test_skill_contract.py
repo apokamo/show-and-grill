@@ -55,6 +55,9 @@ _NEW_PARTS = (
 
 _SKIP_PARTS = {"__pycache__", ".pytest_cache", ".git"}
 
+# Suffixes that ``_hits`` does not read: CSS (colors look like issue numbers) and images.
+_NOT_SEARCHED = {".css", ".png"}
+
 
 def _files(base: Path) -> list[Path]:
     """List the files under ``base``, without caches and git data.
@@ -80,7 +83,7 @@ def _text_files() -> list[Path]:
 
 
 def _hits(base: Path, pattern: re.Pattern[str]) -> list[str]:
-    """Find lines that match ``pattern`` in text files under ``base`` (``*.css`` excluded).
+    """Find lines that match ``pattern`` in text files under ``base`` (``_NOT_SEARCHED`` excluded).
 
     Args:
         base: The folder to search.
@@ -92,7 +95,7 @@ def _hits(base: Path, pattern: re.Pattern[str]) -> list[str]:
     return [
         f"{path.relative_to(base)}:{lineno}: {line.strip()}"
         for path in _files(base)
-        if path.suffix != ".css"
+        if path.suffix not in _NOT_SEARCHED
         for lineno, line in enumerate(
             path.read_text(encoding="utf-8-sig").splitlines(), start=1
         )
@@ -335,7 +338,7 @@ def test_powershell_server_is_described() -> None:
 
 
 def test_repository_has_no_origin_specific_strings() -> None:
-    """No origin repository strings anywhere in the repository (``*.css`` and caches excluded)."""
+    """No origin repository strings anywhere in the repository (``*.css``, images, and caches excluded)."""
     assert _hits(_REPO_DIR, _ORIGIN_PATTERN) == []
 
 
@@ -417,6 +420,92 @@ def test_readme_covers_install_and_credits() -> None:
         "[MIT](LICENSE)",
     ):
         assert needle in text, needle
+
+
+_FENCE = re.compile(r"^```(\w*)\n(.*?)^```", re.MULTILINE | re.DOTALL)
+
+
+def _commands(text: str) -> list[str]:
+    """Return the ``bash`` and ``powershell`` blocks of a README, without comments.
+
+    Comments are translated, so they are dropped; the commands must stay the same.
+
+    Args:
+        text: The README text.
+
+    Returns:
+        One string per block, in order.
+    """
+    blocks = []
+    for lang, body in _FENCE.findall(text):
+        if lang not in {"bash", "powershell"}:
+            continue
+        lines = [re.sub(r"\s+#.*$", "", line).rstrip() for line in body.splitlines()]
+        blocks.append("\n".join(line for line in lines if line and not line.startswith("#")))
+    return blocks
+
+
+def _heading_levels(text: str) -> list[int]:
+    """Return the level of each Markdown heading outside code blocks.
+
+    Args:
+        text: The README text.
+
+    Returns:
+        The number of ``#`` of each heading, in order.
+    """
+    outside = _FENCE.sub("", text)
+    return [len(m.group(1)) for m in re.finditer(r"^(#{1,6}) ", outside, re.MULTILINE)]
+
+
+def test_readme_has_both_languages() -> None:
+    """``README.md`` (the source) and ``README.ja.md`` link to each other and match in structure.
+
+    Both have the same commands (``bash`` and ``powershell`` blocks, comments aside) and
+    the same heading outline. This does not check the translation itself.
+    """
+    en = (_REPO_DIR / "README.md").read_text(encoding="utf-8")
+    ja = (_REPO_DIR / "README.ja.md").read_text(encoding="utf-8")
+    assert "[日本語](README.ja.md)" in en
+    assert "[English](README.md)" in ja
+    assert len(_commands(en)) >= 6
+    assert _commands(ja) == _commands(en)
+    assert _heading_levels(ja) == _heading_levels(en)
+    for needle in ("https://github.com/mattpocock/skills", "[MIT](LICENSE)"):
+        assert needle in ja, needle
+
+
+_PICTURE = re.compile(r"<picture>(.*?)</picture>", re.DOTALL)
+
+
+@pytest.mark.parametrize(
+    ("readme", "prefix"),
+    [("README.md", "docs/images/example-"), ("README.ja.md", "docs/images/example-ja-")],
+)
+def test_readme_shows_the_example_page(readme: str, prefix: str) -> None:
+    """Each README shows the example page in its language: dark in ``<source>``, light in ``<img>``."""
+    text = (_REPO_DIR / readme).read_text(encoding="utf-8")
+    text = re.sub(r"<!--.*?-->", "", text, flags=re.DOTALL)
+    pictures = _PICTURE.findall(text)
+    assert len(pictures) == 1
+    picture = pictures[0]
+    assert re.search(
+        rf'<source media="\(prefers-color-scheme: dark\)" srcset="{prefix}dark\.png">',
+        picture,
+    )
+    assert re.search(rf'<img alt="[^"]+" src="{prefix}light\.png"', picture)
+    for image in (f"{prefix}light.png", f"{prefix}dark.png"):
+        assert (_REPO_DIR / image).is_file(), image
+
+
+def test_changelog_has_the_plugin_version() -> None:
+    """``CHANGELOG.md`` has an Unreleased section and a section for the plugin version."""
+    text = (_REPO_DIR / "CHANGELOG.md").read_text(encoding="utf-8")
+    assert "## [Unreleased]" in text
+    version = _json(".claude-plugin/plugin.json")["version"]
+    assert _json(".codex-plugin/plugin.json")["version"] == version
+    assert f"## [{version}] - " in text
+    assert f"/releases/tag/v{version}" in text
 
 
 def test_serve_ps1_has_bom_and_ascii_only() -> None:
