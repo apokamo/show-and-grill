@@ -7,6 +7,8 @@ tag (`vX.Y.Z`), which `install.sh --version` installs.
 
 ## [Unreleased]
 
+## [0.2.0] - 2026-11-27
+
 ### Added
 
 - README: screenshots of an example question page (light and dark), a sample of
@@ -48,5 +50,6 @@ First public release.
 - The page server no longer looks up the host name when it starts. The lookup
   took 35 seconds on a macOS CI runner, so the server did not start in time.
 
-[Unreleased]: https://github.com/apokamo/show-and-grill/compare/v0.1.0...HEAD
+[Unreleased]: https://github.com/apokamo/show-and-grill/compare/v0.2.0...HEAD
+[0.2.0]: https://github.com/apokamo/show-and-grill/releases/tag/v0.2.0
 [0.1.0]: https://github.com/apokamo/show-and-grill/releases/tag/v0.1.0
