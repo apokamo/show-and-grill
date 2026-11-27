@@ -213,22 +213,14 @@ def _section(text: str, heading: str) -> str:
     return "\n".join(lines[start:end])
 
 
-def test_server_steps_take_over_on_resume() -> None:
-    """Step 3 starts the server on every resume, takes over, and gets the URL from this start's ``SERVING`` line.
+def test_step3_gets_the_url_from_the_serving_line() -> None:
+    """Step 3 gets the URL from this start's ``SERVING`` line (``--wait-log``).
 
-    Step 6 gives the ``serve.py`` command to open the pages again later.
+    ``tests/test_serve.py`` checks the take-over itself.
     """
-    text = _skill_md()
-    step3 = _section(text, "### Step 3:")
+    step3 = _section(_skill_md(), "### Step 3:")
     assert "--wait-log" in step3
     assert "SERVING" in step3
-    assert re.search(r"always start the server", step3, re.IGNORECASE)
-    assert re.search(r"resume", step3, re.IGNORECASE)
-    assert re.search(r"takes? over", step3, re.IGNORECASE)
-    assert "if a server already runs, you get the same URL" not in step3
-    assert re.search(r"do not use `--status`", step3, re.IGNORECASE)
-    step6 = _section(text, "### Step 6:")
-    assert "scripts/serve.py" in step6
 
 
 def _claude_code_launch_command(text: str) -> str:
@@ -297,41 +289,31 @@ def test_claude_code_launch_removes_old_log_before_returning(tmp_path: Path) -> 
 # --- SKILL.md: how pages open, stopping and resuming, the PowerShell server ----
 
 
-def test_pages_open_from_a_link() -> None:
-    """Pages open from a printed link; no per-OS open commands or extra permissions."""
+def test_pages_open_in_the_browser_and_the_link_is_printed() -> None:
+    """The agent opens each page in a new tab with Python's ``webbrowser`` and always prints the link.
+
+    No ``explorer.exe`` or ``xdg-open``: the only per-OS command is ``Start-Process``, for ``serve.ps1``.
+    """
     text = _skill_md()
-    for word in ("explorer.exe", "xdg-open", "@Browser", "extra run permission"):
+    for word in ("explorer.exe", "xdg-open", "@Browser"):
         assert word not in text, word
+    assert "python3 -m webbrowser -t" in text
+    assert "Start-Process" in text
     assert re.search(r"print the link in the terminal", text, re.IGNORECASE)
-    assert re.search(
-        r"permission settings allow it, you may also open the page automatically",
-        text,
-        re.IGNORECASE,
-    )
-    description = str(_frontmatter(text)["description"])
-    assert "opens in the browser" not in description
-    assert "link" in description
+    assert "link" in str(_frontmatter(text)["description"])
 
 
 def test_stopping_and_resuming() -> None:
-    """SKILL.md says how to save progress, what not to write, and where to resume."""
+    """A stopped grill saves its progress, and does not look finished to other tools."""
     section = _section(_skill_md(), "### Stopping and resuming")
     assert "## show-and-grill progress" in section
-    assert re.search(r"comment", section, re.IGNORECASE)
-    assert "GRILL_DIR" in section
     assert re.search(r"do not rewrite the issue body", section, re.IGNORECASE)
     assert re.search(r"provenance.*only at the end", section, re.IGNORECASE)
-    assert re.search(r"continue from the first open question", section, re.IGNORECASE)
 
 
 def test_powershell_server_is_described() -> None:
-    """SKILL.md says to use ``scripts/serve.ps1`` on Windows when no Python is found."""
-    text = _skill_md()
-    assert "scripts/serve.ps1" in text
-    step3 = _section(text, "### Step 3:")
-    assert "serve.ps1" in step3
-    assert re.search(r"Windows without Python", step3)
-    assert re.search(r"none of `python3`, `python`, or `py -3` is found", step3)
+    """Step 3 of SKILL.md gives the PowerShell server (``serve.ps1``)."""
+    assert "serve.ps1" in _section(_skill_md(), "### Step 3:")
 
 
 # --- The repository: no origin strings, plugins, license, README, encoding -----
@@ -418,8 +400,10 @@ def test_readme_covers_install_and_credits() -> None:
         "https://github.com/nicobailon/visual-explainer",
         "https://github.com/jasonku09/grill-with-ui",
         "[MIT](LICENSE)",
+        "(docs/CREDITS.md)",
     ):
         assert needle in text, needle
+    assert (_REPO_DIR / "docs" / "CREDITS.md").is_file()
 
 
 _FENCE = re.compile(r"^```(\w*)\n(.*?)^```", re.MULTILINE | re.DOTALL)
@@ -471,7 +455,7 @@ def test_readme_has_both_languages() -> None:
     assert len(_commands(en)) >= 6
     assert _commands(ja) == _commands(en)
     assert _heading_levels(ja) == _heading_levels(en)
-    for needle in ("https://github.com/mattpocock/skills", "[MIT](LICENSE)"):
+    for needle in ("https://github.com/mattpocock/skills", "[MIT](LICENSE)", "(docs/CREDITS.md)"):
         assert needle in ja, needle
 
 

@@ -4,7 +4,7 @@ Language: English | [日本語](README.ja.md)
 
 A relentless design interview for coding agents (Claude Code and Codex).
 
-Before each question, the agent writes a page with the facts you need to decide: how things work now, how the options differ, and a recommendation, with figures and tables. You open the page from a link in the terminal and answer in the terminal, one question at a time. At the end, the decisions go into the issue body (or your plan file) and a provenance comment.
+Before each question, the agent writes a page with the facts you need to decide: how things work now, how the options differ, and a recommendation, with figures and tables. The agent opens the page in your browser (the terminal also shows a link), and you answer in the terminal, one question at a time. At the end, the decisions go into the issue body (or your plan file) and a provenance comment.
 
 Use it on purpose, right after an issue or plan is written and before automated work starts. Skip it for small issues.
 
@@ -152,7 +152,7 @@ This is a new implementation. No code was copied; only ideas were taken. The mai
 - [nicobailon/visual-explainer](https://github.com/nicobailon/visual-explainer) (MIT): plain language and the figure parts.
 - [jasonku09/grill-with-ui](https://github.com/jasonku09/grill-with-ui) (MIT): showing a recommendation next to each question.
 
-See "Sources and credits" in [SKILL.md](skills/show-and-grill/SKILL.md) for the full list.
+See [docs/CREDITS.md](docs/CREDITS.md) for the full list.
 
 ## License
 

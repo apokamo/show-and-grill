@@ -15,6 +15,18 @@ tag (`vX.Y.Z`), which `install.sh --version` installs.
   source.
 - This changelog.
 
+### Changed
+
+- The agent opens each question page in the browser (`python3 -m webbrowser`).
+  The link is still printed in the terminal.
+- SKILL.md is shorter: repeated rules are merged, and the steps for the server,
+  recording, and stopping say less about why.
+- Sources and credits moved from SKILL.md to `docs/CREDITS.md`.
+
+### Removed
+
+- The session log (`log.md`).
+
 ## [0.1.0] - 2026-11-16
 
 First public release.

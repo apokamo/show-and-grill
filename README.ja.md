@@ -6,7 +6,7 @@ Language: [English](README.md) | 日本語
 
 コーディングエージェント（Claude Code と Codex）のための、妥協しない設計のインタビューです。
 
-問いのたびに、あなたが決めるのに要る事実を、エージェントが 1 枚のページに書きます。今どうなっているか、案ごとにどう違うか、推奨は何かを、図と表で示します。ページはターミナルのリンクから開き、答えはターミナルで 1 問ずつ返します。最後に、決めたことが Issue の本文（または計画のファイル）と、経緯を残すコメントに入ります。
+問いのたびに、あなたが決めるのに要る事実を、エージェントが 1 枚のページに書きます。今どうなっているか、案ごとにどう違うか、推奨は何かを、図と表で示します。ページはエージェントがブラウザで開き（ターミナルにもリンクが出ます）、答えはターミナルで 1 問ずつ返します。最後に、決めたことが Issue の本文（または計画のファイル）と、経緯を残すコメントに入ります。
 
 Issue や計画を書いた直後、自動の作業を始める前に、自分の意思で起動して使います。小さな Issue には使いません。
 
@@ -154,7 +154,7 @@ python -m pytest
 - [nicobailon/visual-explainer](https://github.com/nicobailon/visual-explainer)（MIT）：平易な言葉と、図の部品。
 - [jasonku09/grill-with-ui](https://github.com/jasonku09/grill-with-ui)（MIT）：問いの横に推奨を出すこと。
 
-すべての出典は [SKILL.md](skills/show-and-grill/SKILL.md) の "Sources and credits" にあります。
+すべての出典は [docs/CREDITS.md](docs/CREDITS.md) にあります。
 
 ## ライセンス
 
