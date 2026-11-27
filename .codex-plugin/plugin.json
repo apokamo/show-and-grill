@@ -1,6 +1,6 @@
 {
   "name": "show-and-grill",
-  "version": "0.1.0",
+  "version": "0.2.0",
   "description": "A relentless design interview that shows the facts for each decision as a page with figures and tables, then asks one hard question at a time in the terminal.",
   "author": {
     "name": "apokamo",
